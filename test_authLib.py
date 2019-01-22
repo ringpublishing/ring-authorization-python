@@ -16,7 +16,7 @@ lib = {
     },
     'solution': 'onetapi',
     'api_key': 'apikey',
-    'api-client-id': 'apiclientid'
+    'secret': 'secret'
 }
 
 authlib = authclient.AuthLib(lib)

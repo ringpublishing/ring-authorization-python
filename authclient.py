@@ -54,7 +54,7 @@ class AuthLib(object):
             params=params,
             canonical_headers=headers['canonical_headers'],
             signed_headers=headers['sign_headers'],
-            payload_hash=self._sign(self.info['api_key'], payload, True)
+            payload_hash=self._sign(self.info['secret'], payload, True)
         )
 
     def _getheaders(self):
@@ -74,11 +74,11 @@ class AuthLib(object):
             hash_method=self.info['hash_method'],
             date=self.info['date'].strftime('%Y%m%dT%H%M%SZ'),
             scope='dl1_request',
-            canreqhash=self._sign(self.info['api_key'], canreq, True)
+            canreqhash=self._sign(self.info['secret'], canreq, True)
         )
 
     def _getsigningkey(self):
-        key = self._sign(self.info['api_key'], self.info['date'].strftime('%Y%m%d'))
+        key = self._sign(self.info['secret'], self.info['date'].strftime('%Y%m%d'))
         key = self._sign(key, 'solution')
         key = self._sign(key, 'pulsapi')
         key = self._sign(key, 'dl1_request')
@@ -93,9 +93,7 @@ class AuthLib(object):
 
     def signrequest(self):
         auth = self.info['hash_method'] + \
-               ' Credential=' + \
-               self.info['api-client-id'] + \
-               '/dl1_request, SignedHeaders=' + \
+               ' Credential=' + self.info['api_key'] + '/' + self.info['date'].strftime('%Y%m%d') + '/' + self.info['solution'] + '/pulsapi/dl1_request, SignedHeaders=' + \
                self._getheaders()['sign_headers'] + \
                ', Signature=' + \
                self._getsignature()

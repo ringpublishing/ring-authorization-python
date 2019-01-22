@@ -9,10 +9,7 @@ lib = {
     'payload': '',
     'headers': {
         'host': '1',
-        'elel2p': '1',
-        'elel23p': '1',
-        'ele555lp': '1',
-        'abcd': '2'
+        'content-type': 'costam',
     },
     'solution': 'onetapi',
     'api_key': 'apikey',

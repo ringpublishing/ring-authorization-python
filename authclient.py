@@ -92,10 +92,11 @@ class AuthLib(object):
         return signature
 
     def signrequest(self):
-        auth = self.info['hash_method'] + \
-               ' Credential=' + self.info['api_key'] + '/' + self.info['date'].strftime('%Y%m%d') + '/' + self.info['solution'] + '/pulsapi/dl1_request, SignedHeaders=' + \
-               self._getheaders()['sign_headers'] + \
-               ', Signature=' + \
-               self._getsignature()
-        return {'X-dl-date': self.info['date'].strftime('%Y%m%dT%H%M%SZ'),
-                'Authorization': auth}
+        return {'Authorization': self.info['hash_method'] + \
+                                 ' Credential=' +
+                                 self.info['api_key'] + '/' +
+                                 self.info['date'].strftime('%Y%m%d') + '/' +
+                                 self.info['solution'] +
+                                 '/pulsapi/dl1_request, SignedHeaders=' + \
+                                 self._getheaders()['sign_headers'] + \
+                                 ', Signature=' + self._getsignature()}

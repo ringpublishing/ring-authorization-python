@@ -17,5 +17,5 @@ lib = {
 }
 
 authlib = authclient.AuthLib(lib)
-header = authlib.signrequest()
+header = authlib.sign()
 print(header)

@@ -1,21 +1,27 @@
-import authclient
+import ring_auth_python
 
 # Sample test of class
 
-lib = {
-    'method': 'POST',
-    'uri': '/api/test/getall',
-    'hash_method': 'DL-HMAC-SHA256',
-    'payload': '',
-    'headers': {
-        'host': '1',
-        'content-type': 'costam',
-    },
-    'solution': 'onetapi',
-    'api_key': 'apikey',
-    'secret': 'secret'
+opt = {
+    'service': 'pulsapi',
+    'access_key': 'AKID',
+    'secret_key': 'TEST',
+    'solution': 'region',
 }
 
-authlib = authclient.AuthLib(lib)
-header = authlib.sign()
-print(header)
+request = {
+    'method': 'GET',
+    'uri': '/test?abc=aaa',
+    'headers': {
+        'host': 'test',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-DL-Date': '20190128T155100Z'
+    },
+    'payload': bytearray('test', encoding='utf-8'),
+
+}
+
+authlib = ring_auth_python.DLSigner(**opt)
+sign_header = authlib.sign(request)
+print(sign_header)

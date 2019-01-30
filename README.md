@@ -29,14 +29,14 @@ request = {
     "headers": {  
         "host": "tmp",  
         "Content-Type": "application/json"   
-    },  
-    "payload": ""   
+    },
+    'body': ''
 }
 ```
-As a payload value you have to put data as a bytearray encoded with utf-8 as shown below.
+As a body value you have to put data as a bytearray encoded with utf-8 as shown below.
 
 ```
-'payload': bytearray(data, encoding='utf-8')
+'body': bytearray(data, encoding='utf-8')
 ```
 
 After that create instance of DLSigner class with a options dictionary given as a parameter of a constructor.

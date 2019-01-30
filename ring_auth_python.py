@@ -57,13 +57,13 @@ class DLSigner(object):
         self.hash_method = getattr(hashlib, self.hash_method)
 
     @staticmethod
-    def check_sign_params(request):
+    def _check_sign_params(request):
         """Checks params of request dictionary."""
         assert request['method'].upper() in ('POST', 'GET', 'PUT', 'DELETE'), 'Invalid REST method.'
         assert 'headers' in request, 'Missing headers parameter.'
         assert 'host' in request['headers'], 'Missing host parameter.'
-        if 'payload' in request:
-            assert isinstance(request['payload'], bytearray), 'Payload must be instance of bytes.'
+        if 'body' in request:
+            assert isinstance(request['body'], bytearray), 'Body must be instance of bytes.'
         copied_request = copy.copy(request)
         if 'X-DL-Date' not in request['headers']:
             copied_request['headers']['X-DL-Date'] = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
@@ -80,7 +80,7 @@ class DLSigner(object):
         """Return formatted string of canonical request data"""
         method = request['method']
         uri = request['uri'] or '/'
-        payload = request.get('payload', b'')
+        payload = request.get('body', b'')
         headers = self._get_headers(request)
 
         if '?' in uri:
@@ -156,7 +156,7 @@ class DLSigner(object):
 
         :returns: dict:
         """
-        request = self.check_sign_params(original_request)
+        request = self._check_sign_params(original_request)
         return {'Authorization':
             '{algorithm} Credential={credentials},SignedHeaders={signed_headers},Signature={signature}'.format(
                 algorithm=self.algorithm.upper(),

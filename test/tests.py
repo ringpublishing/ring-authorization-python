@@ -122,7 +122,7 @@ class SignerTests(unittest.TestCase):
         options = self.get_options_dict()
         request = self.get_request_dict()
 
-        request['payload'] = 'string'
+        request['body'] = 'string'
         with self.assertRaises(AssertionError):
             ring_auth_python.DLSigner(**options).sign(request)
 
@@ -138,7 +138,7 @@ class SignerTests(unittest.TestCase):
         options = self.get_options_dict()
         request = self.get_request_dict()
 
-        request['payload'] = b''
+        request['body'] = b''
         testobj = ring_auth_python.DLSigner(**options)
         self.assertEqual(testobj._get_canonical_request(request).split('\n')[7].lower(),
                          'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
@@ -173,7 +173,7 @@ class SignerTests(unittest.TestCase):
         self.assertEqual(string_to_sign[1], request['headers']['X-DL-Date'], 'String to sign does not include date.')
         self.assertEqual(string_to_sign[2], '20190121/RING/pulsapi/dl1_request',
                          'String to sign does not include scope value.')
-        self.assertTrue(len(string_to_sign[3]) == 64, 'Hashing of payload did not work correcly.')
+        self.assertTrue(len(string_to_sign[3]) == 64, 'Hashing of body did not work correcly.')
 
     def test_signed_headers_formatting(self):
         request = self.get_request_dict()

@@ -105,7 +105,7 @@ class SignerTests(unittest.TestCase):
         testobj = DLSigner(**self.options)
         self.assertEqual(testobj._get_canonical_request(self.request).split('\n')[7].lower(),
                          'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-                         'Hashing method does not work correcly.')
+                         'Hashing method does not work correctly.')
 
     def test_if_date_was_not_provided_there_will_return_default_date_key(self):
         self.request['headers'].pop('X-DL-Date')
@@ -127,7 +127,7 @@ class SignerTests(unittest.TestCase):
         self.assertEqual(string_to_sign[1], self.request['headers']['X-DL-Date'], 'String to sign does not include date.')
         self.assertEqual(string_to_sign[2], '20190121/RING/pulsapi/dl1_request',
                          'String to sign does not include scope value.')
-        self.assertTrue(len(string_to_sign[3]) == 64, 'Hashing of body did not work correcly.')
+        self.assertTrue(len(string_to_sign[3]) == 64, 'Hashing of body did not work correctly.')
 
     def test_formatting_of_returned_signed_headers_in_get_headers_method(self):
         self.assertEqual(DLSigner._get_headers(self.request)['signed_headers'],
@@ -183,7 +183,7 @@ class SignerTests(unittest.TestCase):
                          'content-type;host;x-dl-date\n' +
                          'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 
-    def test_returned_canonoical_request_values_if_no_query_string_provided(self):
+    def test_returned_canonical_request_values_if_no_query_string_provided(self):
         self.request['uri'] = '/examplebucket'
         test_object = DLSigner(**self.options)
         canonical_request = test_object._get_canonical_request(self.request)

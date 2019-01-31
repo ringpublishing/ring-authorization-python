@@ -1,6 +1,6 @@
 from datetime import datetime
 import unittest
-import ring_auth_python
+from ring_auth_python import DLSigner
 
 
 class SignerTests(unittest.TestCase):

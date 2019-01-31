@@ -8,5 +8,6 @@ setup(
     license='',
     author='DreamLab',
     author_email='?',
-    description='Libray designed to sign requests and make authenticating on AWS services easier.'
+    description='Libray designed to sign requests and make authenticating on AWS services easier.',
+    install_requires=['future']
 )

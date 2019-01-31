@@ -35,17 +35,10 @@ class DLSigner(object):
                * SHA512
             for example if you choose SHA256 finally the value of 'algorithm' key looks like DL-HMAC-SHA256.
             """
-        assert service is not None, 'Missing service param.'
-        assert len(service) > 1, 'Missing service param.'
         self.service = service
-        assert access_key is not None, 'Missing access_key param.'
-        assert len(access_key) > 1, 'Missing access_key param.'
         self.access_key = access_key
-        assert secret_key is not None, 'Missing secret_key param.'
-        assert len(secret_key) > 1, 'Missing secret_key param.'
         self.secret_key = secret_key
         self.solution = solution
-
         assert algorithm.startswith('DL-HMAC-SHA'), 'Invalid hashing method.'
         self.algorithm = algorithm
         self.hash_method = algorithm.split('-')[-1].lower()
@@ -56,17 +49,16 @@ class DLSigner(object):
     @staticmethod
     def _check_sign_params(request):
         """Checks params of request dictionary."""
-        assert request['method'].upper() in ('POST', 'GET', 'PUT', 'DELETE'), 'Invalid REST method.'
         assert 'headers' in request, 'Missing headers parameter.'
         assert_headers = set(k.lower() for k in request['headers'])
         assert 'host' in assert_headers, 'Missing Host parameter.'
         if 'body' in request:
             assert isinstance(request['body'], bytearray), 'Body must be instance of bytes.'
         assert 'content-type' in assert_headers
-        del assert_headers
         copied_request = copy.copy(request)
-        if 'X-DL-Date' not in request['headers']:
+        if 'x-dl-date' not in assert_headers:
             copied_request['headers']['X-DL-Date'] = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        del assert_headers
         return copied_request
 
     def _sign(self, key, msg, hex_output=False):

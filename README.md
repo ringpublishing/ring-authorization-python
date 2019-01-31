@@ -12,10 +12,9 @@ options = {
     'solution': 'region',
 }
 ```
-Solution key is not cecessary to provide. The default value is RING.
 
-Also you are allowed to provide your own encrypting algorithm. To do that you have to insert into options dictionary
-key named 'algorithm' with one of following values:
+You can specify encrypting algorithm used in signature creation. 
+Add *algorithm* key with one of the following values:
 * DL-HMAC-SHA224
 * DL-HMAC-SHA256
 * DL-HMAC-SHA384
@@ -31,7 +30,7 @@ request = {
         "host": "tmp",  
         "Content-Type": "application/json"   
     },
-    'body': ''
+    'body': bytearray('test', encoding='utf-8'),
 }
 ```
 As body value you have to put data as an bytearray encoded with utf-8 as shown below.
@@ -40,11 +39,11 @@ As body value you have to put data as an bytearray encoded with utf-8 as shown b
 'body': bytearray(data, encoding='utf-8')
 ```
 
-Next create instance of DLSigner class with dictionary given as a parameter of a constructor.
-And call 'sign' method with a second dictionary which you created in parameter of method.
+Next, create instance of a DLSigner class with an *options* dictionary given as a parameter of a constructor.
+Then call *sign* method with a *request* dictionary.
 ```
-authlib = ring_auth_python.Auth(**options)
+authlib =ring_auth_python.DLSigner(**options)
 header = authlib.sign(request)
 ```
 
-From now variable 'header' will store dictionary with keys 'Authorization' and 'X-DL-Date' which are nessesary to authenticate your request. 
+From now variable 'header' will store dictionary which allows to authenticate your request. 

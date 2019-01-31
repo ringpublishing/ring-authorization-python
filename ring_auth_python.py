@@ -194,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument('--payload', help='Request payload (UTF-8 string)', default='',
                         type=partial(bytes, encoding='utf-8'))
     parser.add_argument('--method', help='HTTP method', required=True,
-                        choices=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE'])
+                        choices=['GET', 'POST', 'PUT', 'DELETE'])
     parser.add_argument('--uri', help='Request URI, (default: /)', default='/')
     parser.add_argument('--algorithm', help='Hashing method (default: "DL-HMAC-SHA256")',
                         default='DL-HMAC-SHA256', dest='alg')
@@ -203,11 +203,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     signer = DLSigner(service=args.service, access_key=args.service, secret_key=args.secret, algorithm=args.alg)
-    result = signer.sign(dict(
-        method=args.method,
-        uri=args.uri,
-        headers=dict(h.split(':') for h in args.header)
-    ))
+    try:
+        result = signer.sign(dict(
+            method=args.method,
+            uri=args.uri,
+            headers=dict(h.split(':') for h in args.header)
+        ))
+    except Exception as e:
+        print('Unable to generate signature due to error: ', e)
+        exit(1)
 
     if args.output_format == 'json':
         import json

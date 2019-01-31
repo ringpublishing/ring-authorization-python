@@ -4,20 +4,16 @@ from __future__ import unicode_literals
 import hmac
 import hashlib
 import copy
-from functools import partial
 from datetime import datetime
-
-#TODO Compability issues - not solved
 
 try:
     # Py2
-    import urlparse as parse
-    from urllib import urlencode
+    from urllib import quote
+    from urlparse import urlparse, parse_qsl
 except ImportError:
     # Py3
-    from urllib import parse
+    from urllib.parse import quote, urlparse, parse_qsl
 
-query_parser = partial(parse.parse_qsl, keep_blank_values=True)
 SCOPE = 'dl1_request'
 
 
@@ -80,20 +76,16 @@ class DLSigner(object):
     def _get_canonical_request(self, request):
         """Return formatted string of canonical request data"""
         method = request['method']
-        uri = request['uri'] or '/'
+        uri = urlparse(request['uri'] or '/')
         payload = request.get('body', b'')
         headers = self._get_headers(request)
 
-        if '?' in uri:
-            uri, params = uri.split('?', 1)
-            params = sorted(query_parser(params))
-            params = parse.urlencode(params, quote_via=parse.quote)
-        else:
-            params = ''
+        params = parse_qsl(uri.query, keep_blank_values=True)
+        params = '&'.join('{}={}'.format(quote(k, safe='-_.~'), quote(v, safe='-_.~')) for k, v in sorted(params))
 
         return "{method}\n{uri}\n{params}\n{canonical_headers}\n{signed_headers}\n{payload_hash}".format(
             method=method,
-            uri=parse.quote(uri, safe='', encoding='utf-8'),
+            uri=quote(uri.path, safe='/-_.~'),
             params=params,
             canonical_headers=headers['canonical_headers'],
             signed_headers=headers['signed_headers'],
@@ -175,6 +167,7 @@ class DLSigner(object):
 
 if __name__ == '__main__':
     import sys
+    from functools import partial
 
     try:
         import argparse
@@ -211,6 +204,7 @@ if __name__ == '__main__':
         ))
     except Exception as e:
         print('Unable to generate signature due to error: ', e)
+        raise
         exit(1)
     else:
         if args.output_format == 'json':

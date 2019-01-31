@@ -175,7 +175,7 @@ class SignerTests(unittest.TestCase):
         test_object = DLSigner(**self.options)
         canonical_request = test_object._get_canonical_request(self.request)
         self.assertEqual(canonical_request, 'POST\n' +
-                         '%2Fexamplebucket' + '\n' +
+                         '/examplebucket' + '\n' +
                          'marker=someMarker&max-keys=20&prefix=somePrefix\n' +
                          'content-type:application/json\n' +
                          'host:tmp\n' +
@@ -188,7 +188,7 @@ class SignerTests(unittest.TestCase):
         test_object = DLSigner(**self.options)
         canonical_request = test_object._get_canonical_request(self.request)
         self.assertEqual(canonical_request, 'POST\n' +
-                         '%2Fexamplebucket' + '\n' +
+                         '/examplebucket' + '\n' +
                          '\n' +
                          'content-type:application/json\n' +
                          'host:tmp\n' +

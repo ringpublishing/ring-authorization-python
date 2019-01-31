@@ -1,22 +1,19 @@
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import hmac
 import hashlib
 import copy
-from functools import partial
 from datetime import datetime
-
-#TODO Compability issues - not solved
 
 try:
     # Py2
-    import urlparse as parse
-    from urllib import urlencode
+    from urllib import quote
+    from urlparse import urlparse, parse_qsl
 except ImportError:
     # Py3
-    from urllib import parse
+    from urllib.parse import quote, urlparse, parse_qsl
 
-query_parser = partial(parse.parse_qsl, keep_blank_values=True)
 SCOPE = 'dl1_request'
 
 
@@ -82,20 +79,16 @@ class DLSigner(object):
     def _get_canonical_request(self, request):
         """Return formatted string of canonical request data"""
         method = request['method']
-        uri = request['uri'] or '/'
+        uri = urlparse(request['uri'] or '/')
         payload = request.get('body', b'')
         headers = self._get_headers(request)
 
-        if '?' in uri:
-            uri, params = uri.split('?', 1)
-            params = sorted(query_parser(params))
-            params = parse.urlencode(params, quote_via=parse.quote)
-        else:
-            params = ''
+        params = parse_qsl(uri.query, keep_blank_values=True)
+        params = '&'.join('{}={}'.format(quote(k, safe='-_.~'), quote(v, safe='-_.~')) for k, v in sorted(params))
 
         return "{method}\n{uri}\n{params}\n{canonical_headers}\n{signed_headers}\n{payload_hash}".format(
             method=method,
-            uri=parse.quote(uri, safe='', encoding='utf-8'),
+            uri=quote(uri.path, safe='/-_.~'),
             params=params,
             canonical_headers=headers['canonical_headers'],
             signed_headers=headers['signed_headers'],
@@ -173,3 +166,57 @@ class DLSigner(object):
 
     def verify_sign(self, request, authorization_header):
         return self.sign(request)['Authorization'] == authorization_header
+
+
+if __name__ == '__main__':
+    import sys
+    from functools import partial
+
+    try:
+        import argparse
+    except ImportError:
+        print('Python 2.7 or >= 3.2 required')
+        exit(-1)
+
+    parser = argparse.ArgumentParser(prog='ring_auth',
+                                     description='Generates signature headers for Ring publishing API requests')
+
+    parser.add_argument('--service', help='Ring service (e.g. "pulsapi")', required=True)
+    parser.add_argument('--access', help='API access key', required=True)
+    parser.add_argument('--secret', help='API secret key', required=True)
+    parser.add_argument('--header', help='Headers to sign in format Name:Value, '
+                                         '(at least "Host" and "Content-Type" must be provided)',
+                        required=True, nargs='+')
+    parser.add_argument('--payload', help='Request payload (UTF-8 string)', default='',
+                        type=partial(bytearray, encoding='utf-8'))
+    parser.add_argument('--method', help='HTTP method', required=True,
+                        choices=['GET', 'POST', 'PUT', 'DELETE'])
+    parser.add_argument('--uri', help='Request URI, (default: /)', default='/')
+    parser.add_argument('--algorithm', help='Hashing method (default: "DL-HMAC-SHA256")',
+                        default='DL-HMAC-SHA256', dest='alg')
+    parser.add_argument('--output-file', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+    parser.add_argument('--output-format', help='Signature output format', default='raw', choices=['json', 'raw'])
+    args = parser.parse_args()
+
+    signer = DLSigner(service=args.service, access_key=args.service, secret_key=args.secret, algorithm=args.alg)
+    try:
+        result = signer.sign(dict(
+            method=args.method,
+            uri=args.uri,
+            headers=dict(h.split(':') for h in args.header)
+        ))
+    except Exception as e:
+        print('Unable to generate signature due to error: ', e)
+        exit(1)
+    else:
+        if args.output_format == 'json':
+            import json
+            result = json.dumps(result)
+        else:
+            result = '\n'.join(':'.join(r) for r in result.items())
+
+        args.output_file.write(result)
+        args.output_file.write('\n')
+        args.output_file.close()
+
+        exit(0)

@@ -16,7 +16,7 @@ import ring_auth
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(prog='ring_auth',
+    parser = argparse.ArgumentParser(prog='ring_signer',
                                      description='Generates signature headers for Ring publishing API requests')
 
     parser.add_argument('--service', help='Ring service (e.g. "pulsapi")', required=True)

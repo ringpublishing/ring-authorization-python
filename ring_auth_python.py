@@ -204,7 +204,6 @@ if __name__ == '__main__':
         ))
     except Exception as e:
         print('Unable to generate signature due to error: ', e)
-        raise
         exit(1)
     else:
         if args.output_format == 'json':

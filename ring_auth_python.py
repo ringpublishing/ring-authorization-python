@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import hmac
@@ -170,3 +171,52 @@ class DLSigner(object):
 
     def verify_sign(self, request, authorization_header):
         return self.sign(request)['Authorization'] == authorization_header
+
+
+if __name__ == '__main__':
+    import sys
+
+    try:
+        import argparse
+    except ImportError:
+        print('Python 2.7 or >= 3.2 required')
+        exit(-1)
+
+    parser = argparse.ArgumentParser(prog='ring_auth',
+                                     description='Generates signature headers for Ring publishing API requests')
+
+    parser.add_argument('--service', help='Ring service (e.g. "pulsapi")', required=True)
+    parser.add_argument('--access', help='API access key', required=True)
+    parser.add_argument('--secret', help='API secret key', required=True)
+    parser.add_argument('--header', help='Headers to sign in format Name:Value, '
+                                         '(at least "Host" and "Content-Type" must be provided)',
+                        required=True, nargs='+')
+    parser.add_argument('--payload', help='Request payload (UTF-8 string)', default='',
+                        type=partial(bytes, encoding='utf-8'))
+    parser.add_argument('--method', help='HTTP method', required=True,
+                        choices=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE'])
+    parser.add_argument('--uri', help='Request URI, (default: /)', default='/')
+    parser.add_argument('--algorithm', help='Hashing method (default: "DL-HMAC-SHA256")',
+                        default='DL-HMAC-SHA256', dest='alg')
+    parser.add_argument('--output-file', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+    parser.add_argument('--output-format', help='Signature output format', default='raw', choices=['json', 'raw'])
+    args = parser.parse_args()
+
+    signer = DLSigner(service=args.service, access_key=args.service, secret_key=args.secret, algorithm=args.alg)
+    result = signer.sign(dict(
+        method=args.method,
+        uri=args.uri,
+        headers=dict(h.split(':') for h in args.header)
+    ))
+
+    if args.output_format == 'json':
+        import json
+        result = json.dumps(result)
+    else:
+        result = '\n'.join(':'.join(r) for r in result.items())
+
+    args.output_file.write(result)
+    args.output_file.write('\n')
+    args.output_file.close()
+
+    exit(0)

@@ -61,9 +61,12 @@ class DLSigner(object):
         """Checks params of request dictionary."""
         assert request['method'].upper() in ('POST', 'GET', 'PUT', 'DELETE'), 'Invalid REST method.'
         assert 'headers' in request, 'Missing headers parameter.'
-        assert 'host' in request['headers'], 'Missing host parameter.'
+        assert_headers = set(k.lower() for k in request['headers'])
+        assert 'host' in assert_headers, 'Missing Host parameter.'
         if 'body' in request:
             assert isinstance(request['body'], bytearray), 'Body must be instance of bytes.'
+        assert 'content-type' in assert_headers
+        del assert_headers
         copied_request = copy.copy(request)
         if 'X-DL-Date' not in request['headers']:
             copied_request['headers']['X-DL-Date'] = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')

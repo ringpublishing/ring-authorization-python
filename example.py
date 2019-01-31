@@ -11,7 +11,7 @@ opt = {
 
 request = {
     'method': 'GET',
-    'uri': '/test?abc=aaa',
+    'uri': '/examplebucket?prefix=somePrefix&marker=someMarker&max-keys=20&test=t^e s&aws',
     'headers': {
         'host': 'test',
         'Content-Type': 'application/json',
@@ -19,7 +19,6 @@ request = {
         'X-DL-Date': '20190128T155100Z'
     },
     'payload': bytearray('test', encoding='utf-8'),
-
 }
 
 authlib = ring_auth_python.DLSigner(**opt)

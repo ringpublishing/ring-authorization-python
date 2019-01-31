@@ -1,15 +1,19 @@
-from setuptools import setup
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from distutils.core import setup, find_packages
 
 setup(
     name='ring_auth',
     version='1.0',
-    packages=['src'],
+    package_dir={'ring_auth': 'src'},
+    packages=['ring_auth'],
     url='',
     license='',
     author='DreamLab',
     author_email='?',
     description='Library designed to sign HTTP requests and make authenticating easier.',
-    test_suite="test",
+    test_suite="test/tests.py",
     scripts=['bin/ring_signer'],
     classifiers=[
         'Development Status :: 4 - Beta',

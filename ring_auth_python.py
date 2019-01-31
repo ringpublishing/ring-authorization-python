@@ -192,7 +192,7 @@ if __name__ == '__main__':
                                          '(at least "Host" and "Content-Type" must be provided)',
                         required=True, nargs='+')
     parser.add_argument('--payload', help='Request payload (UTF-8 string)', default='',
-                        type=partial(bytes, encoding='utf-8'))
+                        type=partial(bytearray, encoding='utf-8'))
     parser.add_argument('--method', help='HTTP method', required=True,
                         choices=['GET', 'POST', 'PUT', 'DELETE'])
     parser.add_argument('--uri', help='Request URI, (default: /)', default='/')
@@ -212,15 +212,15 @@ if __name__ == '__main__':
     except Exception as e:
         print('Unable to generate signature due to error: ', e)
         exit(1)
-
-    if args.output_format == 'json':
-        import json
-        result = json.dumps(result)
     else:
-        result = '\n'.join(':'.join(r) for r in result.items())
+        if args.output_format == 'json':
+            import json
+            result = json.dumps(result)
+        else:
+            result = '\n'.join(':'.join(r) for r in result.items())
 
-    args.output_file.write(result)
-    args.output_file.write('\n')
-    args.output_file.close()
+        args.output_file.write(result)
+        args.output_file.write('\n')
+        args.output_file.close()
 
-    exit(0)
+        exit(0)

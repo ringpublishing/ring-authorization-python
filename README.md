@@ -9,7 +9,6 @@ options = {
     'service': 'pulsapi',
     'access_key': 'AKID',
     'secret_key': 'TEST',
-    'solution': 'region',
 }
 ```
 

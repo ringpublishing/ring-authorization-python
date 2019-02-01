@@ -7,11 +7,9 @@ import copy
 from datetime import datetime
 
 try:
-    # Py2
     from urllib import quote
     from urlparse import urlparse, parse_qsl
 except ImportError:
-    # Py3
     from urllib.parse import quote, urlparse, parse_qsl
 
 SCOPE = 'dl1_request'
@@ -22,7 +20,7 @@ class DLSigner(object):
 
     def __init__(self, service, access_key, secret_key, algorithm='DL-HMAC-SHA256', solution='RING'):
         """
-        This class is initiated with five parameters in constructor. Also you are allowed to insert dictionary
+        This class is initiated with three or four parameters in constructor. Also you are allowed to insert dictionary
         with keys as:
             :param service:
             :param access_key: Key that allows you to access to API
@@ -35,10 +33,14 @@ class DLSigner(object):
                * SHA512
             for example if you choose SHA256 finally the value of 'algorithm' key looks like DL-HMAC-SHA256.
             """
+        assert service, 'Missing service parameter.'
         self.service = service
+        assert access_key, 'Missing access_key parameter.'
         self.access_key = access_key
+        assert secret_key, 'Missing secret_key'
         self.secret_key = secret_key
         self.solution = solution
+
         assert algorithm.startswith('DL-HMAC-SHA'), 'Invalid hashing method.'
         self.algorithm = algorithm
         self.hash_method = algorithm.split('-')[-1].lower()
@@ -49,7 +51,7 @@ class DLSigner(object):
     @staticmethod
     def _check_sign_params(request):
         """Checks params of request dictionary."""
-        assert 'headers' in request, 'Missing headers parameter.'
+        assert 'headers' in request, 'Missing headers.'
         assert_headers = set(k.lower() for k in request['headers'])
         assert 'host' in assert_headers, 'Missing Host parameter.'
         if 'body' in request:
@@ -62,14 +64,14 @@ class DLSigner(object):
         return copied_request
 
     def _sign(self, key, msg, hex_output=False):
-        """Performs hashing, returns digest or hexdigest depending on 'hex_output' argument"""
+        """Performs hashing, returns digest or hexdigest depending on 'hex_output' argument."""
         key = key if isinstance(key, bytes) else key.encode('utf-8')
         msg = msg if isinstance(msg, bytes) else msg.encode('utf-8')
         sign = hmac.new(key, msg, self.hash_method)
         return sign.digest() if not hex_output else sign.hexdigest()
 
     def _get_canonical_request(self, request):
-        """Return formatted string of canonical request data"""
+        """Return formatted string of canonical request data."""
         method = request['method']
         uri = urlparse(request['uri'] or '/')
         payload = request.get('body', b'')
@@ -89,7 +91,7 @@ class DLSigner(object):
 
     @staticmethod
     def _get_headers(request):
-        """Method returning dictionary with formatted string of canonical_headers and signned_headers"""
+        """Method returning dictionary with formatted string of canonical_headers and signned_headers."""
         canonical_headers = []
         signed_headers = []
 
@@ -203,6 +205,7 @@ if __name__ == '__main__':
     else:
         if args.output_format == 'json':
             import json
+
             result = json.dumps(result)
         else:
             result = '\n'.join(':'.join(r) for r in result.items())

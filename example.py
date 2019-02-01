@@ -18,7 +18,7 @@ request = {
         'Accept': 'application/json',
         'X-DL-Date': '20190128T155100Z'
     },
-    'payload': bytearray('test', encoding='utf-8'),
+    'body': bytearray('test', encoding='utf-8'),
 }
 
 authlib = ring_auth_python.DLSigner(**opt)

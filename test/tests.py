@@ -1,6 +1,8 @@
 from datetime import datetime
 import unittest
 from ring_auth_python import DLSigner
+from unittest.mock import patch
+from unittest.mock import MagicMock
 
 
 class SignerTests(unittest.TestCase):
@@ -113,11 +115,20 @@ class SignerTests(unittest.TestCase):
                          datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
                          'Default value of X-DL-Date is not equal to actual date.')
 
+    @patch('ring_auth_python.datetime')
+    def test_dt(self, mock_datetime):
+        mock_datetime.utcnow = MagicMock(return_value=datetime(2010, 12, 21, 10, 00, 00))
+        self.request['headers'].pop('X-DL-Date')
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['X-DL-Date'],
+                         mock_datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
+                         'Default value of X-DL-Date is not equal to actual date.')
+
     def test_conditions_of_returned_string_to_sign_params(self):
         signer = DLSigner(**self.options)
         canonical_request = signer._get_canonical_request(self.request)
         string_to_sign = signer._get_string_to_sign(canonical_request, self.request['headers']['X-DL-Date']).split('\n')
-        self.assertEqual(string_to_sign[1], self.request['headers']['X-DL-Date'], 'String to sign does not include date.')
+        self.assertEqual(string_to_sign[1], self.request['headers']['X-DL-Date'],
+                         'String to sign does not include date.')
         self.assertEqual(string_to_sign[2], '20190121/RING/pulsapi/dl1_request',
                          'String to sign does not include scope value.')
         self.assertTrue(len(string_to_sign[3]) == 64, 'Hashing of body did not work correctly.')

@@ -91,7 +91,7 @@ class DLSigner(object):
 
     @staticmethod
     def _get_headers(request):
-        """Method returning dictionary with formatted string of canonical_headers and signned_headers."""
+        """Method returning dictionary with formatted strings of canonical_headers and signned_headers."""
         canonical_headers = []
         signed_headers = []
 
@@ -132,7 +132,7 @@ class DLSigner(object):
         """
         Method dedicated for signing requests.
 
-            :param original_request: has to be an instance of dict with values:
+            :param original_request: has to be an instance of dict with keys:
                 * method: - with values POST/GET/PUT/DELETE
                 * uri: URI of the request. If there is no URI given in request dict,
                 program will insert default value of URI.
@@ -140,9 +140,8 @@ class DLSigner(object):
                     Into headers you have to put 'host' key.
                 * payload: - optional.
 
-        Before method proceed all data they are being checked by check_sign_params method and
-        if there will not happen any failture function is returning dictionary with Authorization
-        and X-DL-Date header.
+        Before this method will proceed all data they are being checked by check_sign_params method and
+        if there will not happen any failture there is returned dictionary with params required to authorize.
 
         :returns: dict:
         """

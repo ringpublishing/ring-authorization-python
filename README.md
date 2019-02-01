@@ -41,7 +41,7 @@ As body value you have to put data as an bytearray encoded with utf-8 as shown b
 Next, create instance of a DLSigner class with an *options* dictionary given as a parameter of a constructor.
 Then call *sign* method with a *request* dictionary.
 ```
-authlib =ring_auth_python.DLSigner(**options)
+authlib = DLSigner(**options)
 header = authlib.sign(request)
 ```
 

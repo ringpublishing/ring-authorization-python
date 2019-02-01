@@ -1,8 +1,12 @@
-from datetime import datetime
 import unittest
-from ring_auth_python import DLSigner
-from unittest.mock import patch
-from unittest.mock import MagicMock
+import sys
+from datetime import datetime
+from src import DLSigner
+try:
+    from unittest.mock import patch
+    from unittest.mock import MagicMock
+except ImportError:
+    pass
 
 
 class SignerTests(unittest.TestCase):
@@ -115,7 +119,8 @@ class SignerTests(unittest.TestCase):
                          datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
                          'Default value of X-DL-Date is not equal to actual date.')
 
-    @patch('ring_auth_python.datetime')
+    @unittest.skipIf(sys.version_info < (3, 3, 0), 'Test not supported by this Python version.')
+    @patch('src.ring_auth.datetime')
     def test_dt(self, mock_datetime):
         mock_datetime.utcnow = MagicMock(return_value=datetime(2010, 12, 21, 10, 00, 00))
         self.request['headers'].pop('X-DL-Date')

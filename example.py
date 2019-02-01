@@ -1,4 +1,4 @@
-import ring_auth_python
+from src import DLSigner
 
 # Sample test of class
 
@@ -21,6 +21,6 @@ request = {
     'body': bytearray('test', encoding='utf-8'),
 }
 
-authlib = ring_auth_python.DLSigner(**opt)
+authlib = DLSigner(**opt)
 sign_header = authlib.sign(request)
 print(sign_header)

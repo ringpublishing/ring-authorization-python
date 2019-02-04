@@ -20,19 +20,16 @@ class DLSigner(object):
 
     def __init__(self, service, access_key, secret_key, algorithm='DL-HMAC-SHA256', solution='RING'):
         """
-        This class is initiated with three or four parameters in constructor. Also you are allowed to insert dictionary
-        with keys as:
-            :param service:
-            :param access_key: Key that allows you to access to API
-            :param secret_key: Key
-            :param algorithm: This value has to include prefix 'DL-HMAC-SHA' with hashing algorithm.
-            You are allowed to put hashing algorithms such as:
-               * SHA224,
-               * SHA256, - if algorithm param is missing, used as default value
-               * SHA384,
-               * SHA512
-            for example if you choose SHA256 finally the value of 'algorithm' key looks like DL-HMAC-SHA256.
-            """
+        :param service:
+        :param access_key: Key that allows you to access to API
+        :param secret_key: Key
+        :param algorithm: One of following hashing algorithms:
+            * DL-HMAC-SHASHA224,
+            * DL-HMAC-SHASHA256, - if algorithm param is missing, used as default value
+            * DL-HMAC-SHASHA384,
+            * DL-HMAC-SHASHA512
+        :param solution: Solution which aggregates a several services.
+        """
         assert service, 'Missing service parameter.'
         self.service = service
         assert access_key, 'Missing access_key parameter.'
@@ -131,7 +128,6 @@ class DLSigner(object):
     def sign(self, original_request):
         """
         Method dedicated for signing requests.
-
             :param original_request: has to be an instance of dict with keys:
                 * method: - with values POST/GET/PUT/DELETE
                 * uri: URI of the request. If there is no URI given in request dict,
@@ -140,8 +136,8 @@ class DLSigner(object):
                     Into headers you have to put 'host' key.
                 * payload: - optional.
 
-        Before this method will proceed all data they are being checked by check_sign_params method and
-        if there will not happen any failture there is returned dictionary with params required to authorize.
+        Berofe this method proceeds, all data is checked by check_sign_params method.
+        Then, if there are no failures, dictionary with parameters required for authorization is returned.
 
         :returns: dict:
         """
@@ -149,7 +145,7 @@ class DLSigner(object):
         return {'Authorization':
             '{algorithm} Credential={credentials},SignedHeaders={signed_headers},Signature={signature}'.format(
                 algorithm=self.algorithm.upper(),
-                credentials=self.access_key + '/' + request['headers']['X-DL-Date'] +
+                credentials=self.access_key + '/' + request['headers']['X-DL-Date'][:8] +
                             '/' + self.solution + '/'
                             + self.service + '/' + SCOPE,
                 signed_headers=self._get_headers(request)['signed_headers'],

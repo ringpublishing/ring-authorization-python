@@ -16,9 +16,8 @@ request = {
         'host': 'test',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-DL-Date': '20190128T155100Z'
-    },
-    'body': bytearray('test', encoding='utf-8'),
+        'X-DL-Date': '20190201T143000Z'
+    }
 }
 
 authlib = DLSigner(**opt)

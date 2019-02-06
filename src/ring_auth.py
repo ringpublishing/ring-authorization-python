@@ -20,6 +20,8 @@ class DLSigner(object):
 
     def __init__(self, service, access_key, secret_key, algorithm='DL-HMAC-SHA256', solution='RING'):
         """
+        Signer initialization, accepts arguments that are constant in
+        signing process and not related to specific request
         :param service:
         :param access_key: Key that allows you to access to API
         :param secret_key: Key
@@ -88,7 +90,7 @@ class DLSigner(object):
 
     @staticmethod
     def _get_headers(request):
-        """Method returning dictionary with formatted strings of canonical_headers and signned_headers."""
+        """Method returning dictionary with formatted strings of canonical_headers and signed_headers."""
         canonical_headers = []
         signed_headers = []
 

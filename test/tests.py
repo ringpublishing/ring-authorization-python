@@ -2,6 +2,7 @@ import unittest
 import sys
 from datetime import datetime
 from src import DLSigner
+
 try:
     from unittest.mock import patch
     from unittest.mock import MagicMock
@@ -12,24 +13,35 @@ except ImportError:
 class SignerTests(unittest.TestCase):
     def setUp(self):
         self.request = {
-            'method': 'POST',
-            'uri': '/examplebucket?prefix=somePrefix&marker=someMarker&max-keys=20',
+            'method': 'GET',
+            'uri': '/test',
             'headers': {
-                'host': 'tmp',
+                'host': 'test',
                 'Content-Type': 'application/json',
-                'X-DL-Date': '20190121T131439Z'
+                'X-DL-Date': '19700101T010000Z',
+                'accept': 'application/json'
             },
+        }
+
+        self.request_with_payload = {
+            'method': 'POST',
+            'uri': '/test',
+            'headers': {
+                'host': 'test',
+                'content-type': 'application/json',
+                'accept': 'application/json',
+                'X-DL-Date': '19700101T010000Z'
+            },
+            'body': bytearray('test', encoding='utf-8')
         }
 
         self.options = {
             'service': 'pulsapi',
-            'access_key': 'accesskey',
-            'secret_key': 'secret',
-            'algorithm': 'DL-HMAC-SHA256',
-            'solution': 'RING'
+            'access_key': 'test',
+            'secret_key': 'test'
         }
 
-    def test_returned_instance_of_variable_after_call_sign_request_method(self):
+    def test_returned_instance_after_sign(self):
         self.assertTrue(isinstance(DLSigner(**self.options).sign(self.request), dict),
                         'Sign method is not returning dictionary.')
 
@@ -37,7 +49,7 @@ class SignerTests(unittest.TestCase):
         self.assertFalse(DLSigner(**self.options).sign(self.request).get('Authorization', None) is None,
                          'Authorization header does not exist.')
 
-    def test_returned_authorization_header_value_algorithm_prefix(self):
+    def test_returned_authorization_header_algorithm_prefix(self):
         values = DLSigner(**self.options).sign(self.request)['Authorization'].split()
         self.assertEqual(values[0][:11], 'DL-HMAC-SHA', 'Returned header contains invalid algorithm header.')
 
@@ -46,13 +58,12 @@ class SignerTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             DLSigner(**self.options)
 
-    def test_assertion_error_raised_when_invalid_algorithm_prefix(self):
+    def test_assertion_error_on_invalid_algorithm_prefix(self):
         self.options['algorithm'] = 'DL-HMAC-SHA1'
         with self.assertRaises(AssertionError):
             DLSigner(**self.options)
 
-    def test_algorithm_default_value_insertion_in_returned_dictionary(self):
-        self.options.pop('algorithm')
+    def test_algorithm_default_value_insertion_on_return(self):
         self.assertEqual(DLSigner(**self.options).algorithm, 'DL-HMAC-SHA256',
                          'Invalid default value of algorithm.')
 
@@ -96,24 +107,22 @@ class SignerTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             DLSigner(**self.options).sign(self.request)
 
-    def test_assertion_error_on_no_content_type_provided_in_headers(self):
+    def test_assertion_error_on_no_content_type_provided(self):
         self.request['headers'].pop('Content-Type')
         with self.assertRaises(AssertionError):
             DLSigner(**self.options).sign(self.request)
 
-    def test_equality_of_payload_hash_on_empty_string_as_body(self):
-        self.request['body'] = bytearray('', encoding='utf-8')
-        signer = DLSigner(**self.options)
-        self.assertEqual(signer._get_canonical_request(self.request).split('\n')[7].lower(),
-                         'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-                         'Hashing method does not work correctly.')
+    def test_assertion_error_on_invalid_body(self):
+        self.request_with_payload['body'] = 'test'
+        with self.assertRaises(AssertionError):
+            DLSigner(**self.options).sign(self.request_with_payload)
 
-    def test_if_date_was_not_provided_there_will_return_default_date_key(self):
+    def test_default_date_if_date_was_not_provided(self):
         self.request['headers'].pop('X-DL-Date')
         test_request = DLSigner(**self.options).sign(self.request)
         self.assertTrue('X-DL-Date' in test_request.keys(), 'Signer did not return X-DL-Date header.')
 
-    def test_signature_with_actual_default_date_and_returned_date_key(self):
+    def test_signature_with_default_date_and_returned_date_key(self):
         self.request['headers'].pop('X-DL-Date')
         self.assertEqual(DLSigner(**self.options).sign(self.request)['X-DL-Date'],
                          datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
@@ -121,86 +130,71 @@ class SignerTests(unittest.TestCase):
 
     @unittest.skipIf(sys.version_info < (3, 3, 0), 'Test not supported by this Python version.')
     @patch('src.ring_auth.datetime')
-    def test_dt(self, mock_datetime):
+    def test_insertion_of_datetime(self, mock_datetime):
         mock_datetime.utcnow = MagicMock(return_value=datetime(2010, 12, 21, 10, 00, 00))
         self.request['headers'].pop('X-DL-Date')
         self.assertEqual(DLSigner(**self.options).sign(self.request)['X-DL-Date'],
                          mock_datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),
                          'Default value of X-DL-Date is not equal to actual date.')
 
-    def test_conditions_of_returned_string_to_sign_params(self):
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        string_to_sign = signer._get_string_to_sign(canonical_request, self.request['headers']['X-DL-Date']).split('\n')
-        self.assertEqual(string_to_sign[1], self.request['headers']['X-DL-Date'],
-                         'String to sign does not include date.')
-        self.assertEqual(string_to_sign[2], '20190121/RING/pulsapi/dl1_request',
-                         'String to sign does not include scope value.')
-        self.assertTrue(len(string_to_sign[3]) == 64, 'Hashing of body did not work correctly.')
+    def test_sign_without_query(self):
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' +
+                         'accept;content-type;host;x-dl-date,Signature=' +
+                         '267247df1f154aefc4d27033245fa55cb8abb31f48a85ba55ebfaf82aec4a187')
 
-    def test_formatting_of_returned_signed_headers_in_get_headers_method(self):
-        self.assertEqual(DLSigner._get_headers(self.request)['signed_headers'],
-                         'content-type;host;x-dl-date')
+    def test_sign_with_query(self):
+        self.request['uri'] = '/examplebucket?prefix=somePrefix&marker=someMarker&max-keys=20'
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' +
+                         'accept;content-type;host;x-dl-date,Signature=' +
+                         'ca334d74f2c3b9cc0415b9383966ac1e3c18bd43d9941c5ecdfe272a90aec8f0')
 
-    def test_formatting_of_returned_canonical_headers_in_get_headers_method(self):
-        self.request['headers'] = {
-            'host': 'host',
-            'HEADER1': '  val1  ',
-            'heaDer2': ' val2',
-            'Header3': 'va l3',
-            'header4': ''
-        }
-        self.assertEqual(DLSigner._get_headers(self.request)['canonical_headers'],
-                         'header1:val1\nheader2:val2\nheader3:va l3\nheader4:\nhost:host')
+    def test_sign_with_unsorted_query(self):
+        self.request['uri'] = '/test?Zzz&aaa=B&Aaa'
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' +
+                         'accept;content-type;host;x-dl-date,Signature=' +
+                         'ebfa4276ec80c405cf24d8c5b0816449309427a50cfbd3975a8894aea9d6fdbc')
 
-    def test_formatting_of_canonical_query_string(self):
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        self.assertEqual(canonical_request.split('\n')[2],
-                         'marker=someMarker&max-keys=20&prefix=somePrefix')
+    def test_sign_with_whitespace_in_query(self):
+        self.request['uri'] = '/test/test2?Zzz&aaa=B&Aaa= aw'
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' +
+                         'accept;content-type;host;x-dl-date,Signature=' +
+                         '9e5bc2455a134e86095e7fb631c57d84b2d6c7c8b3db3c0e9ecac96a9068af62')
 
-    def test_formatting_of_canonical_query_string_with_encoded_values(self):
-        self.request['uri'] = '/examplebucket?prefix=somePrefix&marker=someMarker&max-keys=20&test=t^e s'
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        self.assertEqual(canonical_request.split('\n')[2],
-                         'marker=someMarker&max-keys=20&prefix=somePrefix&test=t%5Ee%20s')
+    def test_sign_with_unreserved_chars_in_query(self):
+        self.request['uri'] = '/test/test2?Zzz&aaa=B&Aaa= /aw'
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' +
+                         'accept;content-type;host;x-dl-date,Signature=' +
+                         '2ce30a1edcc686c79b816189c653be1c980a850c04140cbdbde3d2572f62041a')
 
-    def test_formatting_of_canonical_query_string_with_encoded_values_and_empty_value(self):
-        self.request['uri'] = '/examplebucket?prefix=somePrefix&marker=someMarker&max-keys=20&test=t^e s&aws'
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        self.assertEqual(canonical_request.split('\n')[2],
-                         'aws=&marker=someMarker&max-keys=20&prefix=somePrefix&test=t%5Ee%20s')
+    def test_sign_sha_512_hash(self):
+        self.options['algorithm'] = 'DL-HMAC-SHA512'
+        self.request['uri'] = '/test/test2?Zzz&aaa=B&Aaa= /aw.~~'
+        self.assertEqual(DLSigner(**self.options).sign(self.request)['Authorization'],
+                         'DL-HMAC-SHA512 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' +
+                         'accept;content-type;host;x-dl-date,Signature=' +
+                         'bfcf0da0eaeb312f4d4164685996cdb319c57993700a9d0b398b3c5da4da40291e0a25a695752ba08b05019c6b24caec7e9862820bfca149a29be40ee2f4583f')
 
-    def test_equality_of_sorting_in_query_string(self):
-        self.request['uri'] = '/examplebucket?zzz=someValue&Aaaa=someValue&aaa=20&test=t^e s&aws'
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        self.assertEqual(canonical_request.split('\n')[2],
-                         'Aaaa=someValue&aaa=20&aws=&test=t%5Ee%20s&zzz=someValue')
+    def test_sign_with_payload(self):
+        self.assertEqual(DLSigner(**self.options).sign(self.request_with_payload)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' + \
+                         'accept;content-type;host;x-dl-date,Signature=' + \
+                         '0e45160526c02e432cf2b08988a4ae1341cc9a608da5efe330397f581bf32bc2')
 
-    def test_format_and_equality_in_returned_canonical_request(self):
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        self.assertEqual(canonical_request, 'POST\n' +
-                         '/examplebucket' + '\n' +
-                         'marker=someMarker&max-keys=20&prefix=somePrefix\n' +
-                         'content-type:application/json\n' +
-                         'host:tmp\n' +
-                         'x-dl-date:20190121T131439Z\n' +
-                         'content-type;host;x-dl-date\n' +
-                         'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+    def test_sign_with_additional_header(self):
+        self.request_with_payload['headers']['test'] = 'test'
+        self.assertEqual(DLSigner(**self.options).sign(self.request_with_payload)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' + \
+                         'accept;content-type;host;test;x-dl-date,Signature=' + \
+                         'f9bdf85e5226b3889098e799e65bd21cdbb22443893460c2ed050f8ca7b8dabb')
 
-    def test_returned_canonical_request_values_if_no_query_string_provided(self):
-        self.request['uri'] = '/examplebucket'
-        signer = DLSigner(**self.options)
-        canonical_request = signer._get_canonical_request(self.request)
-        self.assertEqual(canonical_request, 'POST\n' +
-                         '/examplebucket' + '\n' +
-                         '\n' +
-                         'content-type:application/json\n' +
-                         'host:tmp\n' +
-                         'x-dl-date:20190121T131439Z\n' +
-                         'content-type;host;x-dl-date\n' +
-                         'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+    def test_sign_with_whitespaces_in_header(self):
+        self.request_with_payload['headers']['test'] = '    test  '
+        self.assertEqual(DLSigner(**self.options).sign(self.request_with_payload)['Authorization'],
+                         'DL-HMAC-SHA256 Credential=test/19700101/RING/pulsapi/dl1_request,SignedHeaders=' + \
+                         'accept;content-type;host;test;x-dl-date,Signature=' + \
+                         'f9bdf85e5226b3889098e799e65bd21cdbb22443893460c2ed050f8ca7b8dabb')

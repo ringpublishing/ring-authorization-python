@@ -32,7 +32,7 @@ request = {
         "host": "tmp",  
         "Content-Type": "application/json"   
     },
-    'body': b'',
+    'body': b'', # array of bytes
 }
 ```
 As body value you have to put data as an bytearray.

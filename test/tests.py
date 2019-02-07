@@ -131,7 +131,7 @@ class SignerTests(unittest.TestCase):
     @unittest.skipIf(sys.version_info < (3, 3, 0), 'Test not supported by this Python version.')
     @patch('src.ring_auth.datetime')
     def test_insertion_of_datetime(self, mock_datetime):
-        mock_datetime.utcnow = MagicMock(return_value=datetime(2010, 12, 21, 10, 00, 00))
+        mock_datetime.utcnow = MagicMock(return_value=datetime(2010, 12, 21, 10, 0, 0))
         self.request['headers'].pop('X-DL-Date')
         self.assertEqual(DLSigner(**self.options).sign(self.request)['X-DL-Date'],
                          mock_datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'),

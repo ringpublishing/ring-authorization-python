@@ -129,7 +129,7 @@ class DLSigner(object):
 
     def sign(self, original_request):
         """
-        Method dedicated for signing requests.
+        Signs request and returns dictionary with parameters required for authorization process.
             :param original_request: has to be an instance of dict with keys:
                 * method: - with values POST/GET/PUT/DELETE
                 * uri: URI of the request. If there is no URI given in request dict,
@@ -137,22 +137,19 @@ class DLSigner(object):
                 * headers: - headers of your requests. This key has to be a dictionary.
                     Into headers you have to put 'host' key.
                 * payload: - optional.
-
-        Berofe this method proceeds, all data is checked by check_sign_params method.
-        Then, if there are no failures, dictionary with parameters required for authorization is returned.
-
         :returns: dict:
         """
         request = self._check_sign_params(original_request)
-        return {'Authorization':
-            '{algorithm} Credential={credentials},SignedHeaders={signed_headers},Signature={signature}'.format(
-                algorithm=self.algorithm.upper(),
-                credentials=self.access_key + '/' + request['headers']['X-DL-Date'][:8] +
-                            '/' + self.solution + '/'
-                            + self.service + '/' + SCOPE,
-                signed_headers=self._get_headers(request)['signed_headers'],
-                signature=self._get_signature(request)
-            ),
+        return {
+            'Authorization':
+                '{algorithm} Credential={credentials},SignedHeaders={signed_headers},Signature={signature}'.format(
+                    algorithm=self.algorithm.upper(),
+                    credentials=self.access_key + '/' + request['headers']['X-DL-Date'][:8] +
+                                '/' + self.solution + '/'
+                                + self.service + '/' + SCOPE,
+                    signed_headers=self._get_headers(request)['signed_headers'],
+                    signature=self._get_signature(request)
+                ),
             'X-DL-Date': request['headers']['X-DL-Date']}
 
     def verify_sign(self, request, authorization_header):

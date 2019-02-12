@@ -36,7 +36,7 @@ class DLSigner(object):
         self.service = service
         assert access_key, 'Missing access_key parameter.'
         self.access_key = access_key
-        assert secret_key, 'Missing secret_key'
+        assert secret_key, 'Missing secret_key parameter'
         self.secret_key = secret_key
         self.solution = solution
 
@@ -151,9 +151,6 @@ class DLSigner(object):
                     signature=self._get_signature(request)
                 ),
             'X-DL-Date': request['headers']['X-DL-Date']}
-
-    def verify_sign(self, request, authorization_header):
-        return self.sign(request)['Authorization'] == authorization_header
 
 
 if __name__ == '__main__':

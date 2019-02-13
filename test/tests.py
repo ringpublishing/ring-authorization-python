@@ -121,6 +121,7 @@ class SignerTests(unittest.TestCase):
         self.request['headers'].pop('X-DL-Date')
         test_request = DLSigner(**self.options).sign(self.request)
         self.assertTrue('X-DL-Date' in test_request.keys(), 'Signer did not return X-DL-Date header.')
+        self.assertNotIn('X-DL-Date', self.request['headers'])
 
     def test_signature_with_default_date_and_returned_date_key(self):
         self.request['headers'].pop('X-DL-Date')

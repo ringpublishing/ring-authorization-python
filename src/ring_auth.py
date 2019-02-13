@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 import hmac
 import hashlib
-import copy
+from copy import deepcopy
 from datetime import datetime
 
 try:
@@ -56,7 +56,7 @@ class DLSigner(object):
         if 'body' in request:
             assert isinstance(request['body'], bytearray), 'Body must be instance of bytes.'
         assert 'content-type' in assert_headers
-        copied_request = copy.copy(request)
+        copied_request = deepcopy(request)
         if 'x-dl-date' not in assert_headers:
             copied_request['headers']['X-DL-Date'] = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
         del assert_headers

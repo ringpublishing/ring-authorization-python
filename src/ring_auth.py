@@ -72,7 +72,7 @@ class DLSigner(object):
     def _get_canonical_request(self, request):
         """Return formatted string of canonical request data."""
         method = request['method']
-        uri = urlparse(request['uri'] or '/')
+        uri = urlparse(request.get('uri', '/'))
         payload = request.get('body', b'')
         headers = self._get_headers(request)
 

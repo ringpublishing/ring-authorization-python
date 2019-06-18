@@ -5,7 +5,7 @@ except ImportError:
 
 setup(
     name='ring_auth',
-    version='1.0.1',
+    version='1.0.2',
     package_dir={'ring_auth': 'src'},
     packages=['ring_auth'],
     url='http://stash.grupa.onet/projects/RING/repos/ring-authorization-python',

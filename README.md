@@ -1,47 +1,77 @@
-# Dreamlab AWS signer
+# ring-authorization-python
 
-### Quick start
+RING requests authorization library for Python (version > 2).
+For more information, please read [RING authorization docs](http://doc.dreamlab/RingAuth/index.html)
 
-To create a new object that will sign your request you have to create two dictionaries with following keys:  
+# Example usage
 
-```
+When sending HTTP requests to RING, all requests must be signed so that RING can identify who sent them.
+In order to sign a request, you need to provide RING access key, RING secret key and the name of the service you make a
+request to. If you do not know what those properties are or how to get them, please contact someone from RING Publishing.
+
+```python
+from src import DLSigner
+
 options = {
     'service': 'pulsapi',
-    'access_key': 'AKID',
-    'secret_key': 'TEST',
+    'access_key': 'access_key',
+    'secret_key': 'secret_key',
+}
+
+signer = DLSigner(**options)
+```
+
+Then, prepare a request which **must** contain *method* and *headers* fields. Moreover, *headers* **must** contain *Host*
+and *Content-Type* fields.
+
+```python
+request = {
+    'method': 'GET',
+    'uri': '/resources?param1=val1',
+    'headers': {
+        'Host': 'api.ring.example.eu',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+}
+
+signature = signer.sign(request)
+print(signature)
+# { 
+#   Authorization: 'DL-HMAC-SHA256 Credential=access_key/20190618/RING/pulsapi/dl1_request,SignedHeaders=accept;content-type;host;x-dl-date,Signature=1abb0ff8c0869749e9db5c50ca3202b1ccae610155b4e7fcaca02ff07398b4d6'
+#   'X-DL-Date': '20190618T103857Z'
+# }
+
+```
+
+Finally, add calculated signature to the request.
+```python
+signedRequest = {
+    'method': 'GET',
+    'uri': '/resources?param1=val1',
+    'headers': {
+        'Host': 'api.ring.example.eu',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'DL-HMAC-SHA256 Credential=access_key/20190618/RING/pulsapi/dl1_request,SignedHeaders=accept;content-type;host;x-dl-date,Signature=1abb0ff8c0869749e9db5c50ca3202b1ccae610155b4e7fcaca02ff07398b4d6',
+        'X-DL-Date': '20190618T103857Z'
+    }
 }
 ```
 
-You can specify encrypting algorithm used in signature creation. 
-Add *algorithm* key with one of the following values:
-* DL-HMAC-SHA224
-* DL-HMAC-SHA256 (default value)
-* DL-HMAC-SHA384
-* DL-HMAC-SHA512
+## POST request
 
-**PREFIX DL-HMAC-SHA IS NECESSESARY**
+If a request contains a body, then it should be passed as a array of bytes.
 
-Additionaly you are allowed to specify a key named *solution*. In this case
-this word means solution that aggregates a several services. The default value is "RING".
-
-```
+```python
 request = {
     "method": "POST",   
-    "uri": "/test/api",  
+    "uri": "/resources",  
     "headers": {  
-        "host": "tmp",  
-        "Content-Type": "application/json"   
+        'Host': 'api.ring.example.eu',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
     },
     'body': b'', # array of bytes
 }
 ```
-As body value you have to put data as an bytearray.
-
-Next, create instance of a DLSigner class with an *options* dictionary given as a parameter of a constructor.
-Then call *sign* method with a *request* dictionary.
-```
-authlib = DLSigner(**options)
-header = authlib.sign(request)
-```
-
-From now variable *header* will store dictionary which allows to authenticate your request. 

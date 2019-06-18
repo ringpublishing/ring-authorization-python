@@ -4,22 +4,21 @@ from src import DLSigner
 
 opt = {
     'service': 'pulsapi',
-    'access_key': 'AKID',
-    'secret_key': 'TEST',
-    'solution': 'region',
+    'access_key': 'access_key',
+    'secret_key': 'secret_key',
 }
 
 request = {
     'method': 'GET',
     'uri': '/examplebucket?prefix=somePrefix&marker=someMarker&max-keys=20&test=t^e s&aws',
     'headers': {
-        'host': 'test',
+        'host': 'api.ring.example.eu',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-DL-Date': '20190201T143000Z'
     }
 }
 
-authlib = DLSigner(**opt)
-sign_header = authlib.sign(request)
-print(sign_header)
+signer = DLSigner(**opt)
+signature = signer.sign(request)
+print(signature)
